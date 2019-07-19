@@ -241,7 +241,7 @@ echo -e '\
 patch -i mincANTS.patch mincANTS_1p9/ImageRegistration/itkANTSImageTransformation.cxx && \
 mkdir /root/build_mincANTS && \
 cd /root/build_mincANTS && \
-/opt/cmake/bin/cmake -DCMAKE_BUILD_TYPE=RELEASE -DITK_DIR=/root/build_itk -DCMAKE_INSTALL_PREFIX=/opt/mincANTS -DBUILD_TESTING=ON ../mincANTS_1p9/Examples && \
+/opt/cmake/bin/cmake -DCMAKE_BUILD_TYPE=RELEASE -DITK_DIR=/root/build_itk -DCMAKE_INSTALL_PREFIX=/opt/mincANTS -DBUILD_TESTING=OFF ../mincANTS_1p9/Examples && \
 make -j 8 && \
 make install
 RUN rm -rf /root/build_mincANTS mincAnts_1p9{,.tar.gz} && \
@@ -249,6 +249,16 @@ rm -rf /root/build_itk InsightToolkit-3.20.0{,.tar.gz}
 # For some reason some of these tests fail
 #RUN make test
 ENV PATH=/opt/mincANTS/bin:$PATH
+# failed tests:
+# ANTS_CC_3_WARP_METRIC_0 (Failed)
+# ANTS_MSQ_WARP_METRIC_0 (Failed)
+# ANTS_GSYN_WARP_METRIC_0 (Failed)
+# ANTS_GSYN_INVERSEWARP_METRIC_0 (Failed)
+# ANTS_PSE_MSQ_IMG_WARP_METRIC_1 (Failed)
+# ANTS_PSE_MSQ_IMG_INVERSEWARP_METRIC_1 (Failed)
+# ANTS_ROT_GSYN_INVERSEWARP_METRIC_0 (Failed)
+# These tests also seem to fail with the old build (found by copying MeasureImageSimilarity over and using some old hdf5 lib)
+
 
 # prevent minc from caching any volumes. Otherwise can cause errors
 ENV VOLUME_CACHE_THRESHOLD=-1
