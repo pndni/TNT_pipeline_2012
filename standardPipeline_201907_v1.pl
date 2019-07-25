@@ -217,6 +217,7 @@ my $nlResample     = "$transformDir/".$inputBase[0]."_res_nl.mnc";
 my $customTags     = "$classifyDir/".$inputBase[0]."_custom_priors.tag";
 my $customTagsBase = $inputBase[0]."_custom_priors.tag";
 my $classify	   = "$classifyDir/".$inputBase[0]."_classify.mnc";
+my $classifyPreLU  = "$classifyDir/".$inputBase[0]."_classifyPreLU.mnc";
 my $classifyNative = "$classifyDir/".$inputBase[0]."_tal_classify.mnc";
 my $segment        = "$segmentDir/".$inputBase[0]."_segment.mnc";
 my $segmentNative  = "$segmentDir/".$inputBase[0]."_tal_segment.mnc";
@@ -255,7 +256,6 @@ my $betTmpOut   = "$tmpdir/$inputBase[0]_out";
 my $mncMask     = "$tmpdir/$inputBase[0]"."_out_mask.mnc";
 my $niiMask     = "$tmpdir/$inputBase[0]"."_out_mask.nii";
 my $niiMask_gz  = "$tmpdir/$inputBase[0]"."_out_mask.nii.gz";
-my $classifyTmp = "$tmpdir/$inputBase[0]"."_classtmp.mnc";
 
 
 ##############
@@ -382,12 +382,12 @@ do_cmd("transformtags",
 	
 do_cmd("classify",
 	"-tagfile", $customTags,
-	$bet, $classifyTmp);
+	$bet, $classifyPreLU);
 	
 do_cmd("minclookup",
 	"-discrete", 
 	"-lut_string", "2 1\; 3 2",
-	$classifyTmp, $classify);
+	$classifyPreLU, $classify);
 	
 do_lobe_segment($tmpdir, $classify, $nlXFM, $segment);
 
