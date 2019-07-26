@@ -222,13 +222,14 @@ my $classifyNative = "$classifyDir/".$inputBase[0]."_tal_classify.mnc";
 my $segment        = "$segmentDir/".$inputBase[0]."_segment.mnc";
 my $segmentNative  = "$segmentDir/".$inputBase[0]."_tal_segment.mnc";
 my $headMask       = "$segmentDir/".$inputBase[0]."_headmask.mnc";
+my $atlasRes       = "$transformDir/".$inputBase[0]."_atlasRes.mnc";
 
 #Just in case;
 my $subCorticalSegLeft; 
 my $subCorticalSegRight;
 
 my @newFiles = ($nucOut, $linXFM, $bet, $betMask, $betMaskLin, $nlXFM, $linResample, $nlResample,
-	$classify, $classifyNative, $segment, $segmentNative, $headMask);
+	$classify, $classifyNative, $segment, $segmentNative, $headMask, $classifyPreLU, $atlasRes);
 
 foreach(@newFiles){
 	if(-e $_){print "\n\n$_ EXISTS!\n"; die;}
@@ -606,7 +607,7 @@ sub do_lobe_segment
 {
 	my ($tmpdir, $classify, $nlXFM, $segment) = @_;
 	
-	my $atlasRes  = $tmpdir."/"."atlasRes.mnc";
+	# my $atlasRes  = $tmpdir."/"."atlasRes.mnc";
 	my $grey      = "${tmpdir}/grey.mnc";
 	my $white     = "${tmpdir}/white.mnc";
 	my $grey_lobes  = "${tmpdir}/grey_lobes.mnc";
