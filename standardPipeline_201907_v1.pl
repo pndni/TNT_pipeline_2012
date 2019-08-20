@@ -277,7 +277,7 @@ do_cmd("mnc2nii", $normalizedOut, $niiTmp);
 do_cmd("bet2", $niiTmp, $betTmpOut, "-mv", "-f", $bet_f, "-g", $bet_g);
 do_cmd("gunzip", $niiMask_gz);
 do_cmd("nii2mnc", $niiMask, $mncMask);
-do_cmd("mincresample", "-near", "-like", "-labels", $nucOut, $mncMask, $betMask);
+do_cmd("mincresample", "-near", "-labels", "-like", $nucOut, $mncMask, $betMask);
 do_cmd("mincmath", "-nocheck", "-byte", "-mult", $betMask, $nucOut, $bet);
 # TODO why byte?
 
