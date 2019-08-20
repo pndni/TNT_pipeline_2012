@@ -28,8 +28,114 @@ RUN rm -rf /root/netcdf-4.0.1{,.tar.gz}
 COPY minc-2.0.18.tar.gz /root/
 RUN tar -xf minc-2.0.18.tar.gz
 # https://mailman.bic.mni.mcgill.ca/pipermail/minc-development/2009-May.txt
+# apply https://github.com/BIC-MNI/libminc/commit/6ef58fe96d1505b5d21b7f9b165d89f957e57cd2
+# apply some of https://github.com/BIC-MNI/minc-tools/commit/9e7058ef0bf78f4a5794a9fff459d9168a225aba
+# apply https://github.com/BIC-MNI/minc-tools/commit/cc03c467df866a76f8a7eb0115ddc0fa10651fa1
 RUN cd /root/minc-2.0.18 && \
 sed -i '147i#define MAX_NC_OPEN 32' libsrc/minc.h && \
+echo -e '\
+206a207\n\
+>    int is_labels;\n\
+1062,1065c1063,1074\n\
+<    maxid = micreate_std_variable(outmincid, MIimagemax, NC_DOUBLE, \n\
+<                                  out_ndims-out_nimgdims, outdim);\n\
+<    minid = micreate_std_variable(outmincid, MIimagemin, NC_DOUBLE, \n\
+<                                  out_ndims-out_nimgdims, outdim);\n\
+---\n\
+>    if( loop_options->is_labels )\n\
+>    {\n\
+>       maxid = micreate_std_variable(outmincid, MIimagemax, NC_DOUBLE, \n\
+>                                     0, NULL);\n\
+>       minid = micreate_std_variable(outmincid, MIimagemin, NC_DOUBLE, \n\
+>                                     0, NULL);\n\
+>    } else {\n\
+>       maxid = micreate_std_variable(outmincid, MIimagemax, NC_DOUBLE, \n\
+>                                     out_ndims-out_nimgdims, outdim);\n\
+>       minid = micreate_std_variable(outmincid, MIimagemin, NC_DOUBLE, \n\
+>                                     out_ndims-out_nimgdims, outdim);\n\
+>    }\n\
+1218,1219c1227,1235\n\
+<       (void) miicv_setint(icvid, MI_ICV_DO_NORM, TRUE);\n\
+<       (void) miicv_setint(icvid, MI_ICV_USER_NORM, TRUE);\n\
+---\n\
+>       if ( loop_options->is_labels )\n\
+>       {\n\
+> 	(void) miicv_setint(icvid, MI_ICV_DO_NORM, FALSE);\n\
+> 	(void) miicv_setint(icvid, MI_ICV_USER_NORM, FALSE);\n\
+> 	(void) miicv_setint(icvid, MI_ICV_DO_RANGE, FALSE);\n\
+>       } else {\n\
+> 	(void) miicv_setint(icvid, MI_ICV_DO_NORM, TRUE);\n\
+> 	(void) miicv_setint(icvid, MI_ICV_USER_NORM, TRUE);\n\
+>       }\n\
+1588,1591c1604,1610\n\
+<             (void) mivarput1(outmincid, maxid, block_cur, \n\
+<                              NC_DOUBLE, NULL, &maximum);\n\
+<             (void) mivarput1(outmincid, minid, block_cur, \n\
+<                              NC_DOUBLE, NULL, &minimum);\n\
+---\n\
+> 	    if ( ! loop_options->is_labels )\n\
+> 	    {\n\
+>               (void) mivarput1(outmincid, maxid, block_cur, \n\
+>                                NC_DOUBLE, NULL, &maximum);\n\
+>               (void) mivarput1(outmincid, minid, block_cur, \n\
+>                                NC_DOUBLE, NULL, &minimum);\n\
+> 	    }\n\
+1630a1650,1663\n\
+>       if ( loop_options->is_labels )\n\
+>       {\n\
+> 	 /*Have to write out global valid range and global image range*/\n\
+> 	 if ((global_minimum[ofile] == DBL_MAX) &&\n\
+> 	     (global_maximum[ofile] == -DBL_MAX)) {\n\
+> 	    global_minimum[ofile] = 0.0;\n\
+> 	    global_maximum[ofile] = 0.0;\n\
+> 	 }\n\
+> 	 valid_range[0] = global_minimum[ofile];\n\
+> 	 valid_range[1] = global_maximum[ofile];\n\
+> 	 (void) mivarput1(outmincid, minid, 0, NC_DOUBLE, NULL, &valid_range[0]);\n\
+> 	 (void) mivarput1(outmincid, maxid, 0, NC_DOUBLE, NULL, &valid_range[1]);\n\
+> 	 (void) miset_valid_range(outmincid, imgid, valid_range);\n\
+>       }\n\
+2695a2729\n\
+>    loop_options->is_labels = FALSE; /* for backward compatibility*/\n\
+2702a2737,2747\n\
+> }\n\
+> \n\
+> MNCAPI void set_loop_labels(Loop_Options *loop_options,\n\
+> 			    int labels)\n\
+> {\n\
+>   loop_options->is_labels = labels;\n\
+> }\n\
+> \n\
+> MNCAPI int get_loop_labels(Loop_Options *loop_options)\n\
+> {\n\
+>   return loop_options->is_labels;\n' > patch_voxel_loop.c.txt && \
+patch -i patch_voxel_loop.c.txt libsrc/voxel_loop.c && \
+echo -e '\
+296a297,299\n\
+> MNCAPI void set_loop_labels(Loop_Options *loop_options,\n\
+> 			    int labels);\n\
+>   \n\
+304a308\n\
+> MNCAPI int get_loop_labels(Loop_Options *loop_options);\n' > patch_voxel_loop.h.txt && \
+patch -i patch_voxel_loop.h.txt libsrc/voxel_loop.h && \
+echo -e '\
+241a242\n\
+> static int is_labels = FALSE;\n\
+289a291,292\n\
+>    {"-labels", ARGV_CONSTANT, (char *) TRUE, (char *) &is_labels,\n\
+>        "integer operation on labels"},\n\
+535a539\n\
+>    set_loop_labels(loop_options, is_labels);\n' > patch_mincmath.c.txt && \
+patch -i patch_mincmath.c.txt progs/mincmath/mincmath.c && \
+echo -e '\
+225a226\n\
+> static int is_labels = FALSE;\n\
+263a265,266\n\
+>     {"-labels", ARGV_CONSTANT, (char *) TRUE, (char *) &is_labels,\n\
+>        "integer operation on labels"},\n\
+362a366\n\
+>    set_loop_labels(loop_options, is_labels || discrete_lookup);\n' > patch_minclookup.c.txt && \
+patch -i patch_minclookup.c.txt progs/minclookup/minclookup.c && \
 chmod +x progs/mincdiff/mincdiff && \
 ./configure --prefix=/opt/minc --with-build-path=/opt/hdf5:/opt/netcdf && \
 make && \
