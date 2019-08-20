@@ -36,13 +36,13 @@ my $model             = "SYS_808";
 my $brainMask         = "/data/MODELS/SYS808_brainmask.mnc";
 my $tagFileDir        = "/data/CLASSIFY";
 my $tagFile           = "ntags_1000_prob_90_nobg_sys808.tag"; #"ntags_sys808_pauslab_jan2012.tag";
-my $atlasModel        = "/data/MODELS/SYS808_atlas_labels_nomiddle.mnc";
+my $atlasModel        = "/data/MODELS/SYS808_atlas_labels_nomiddle_rs.mnc";
 my $subCorticalSeg    = 0;
 my $colinDir          = "/data/MODELS";
 my $colinSubcortModel = "colin_bg_generous_0.3mm.mnc";
 my $colinGlobal       = "colin27_t1_tal_lin";
-my $subCorticalLabelsLeft  = "/data/MODELS/mask_left_oncolinnl_7.mnc";
-my $subCorticalLabelsRight = "/data/MODELS/mask_right_oncolinnl_7.mnc";
+my $subCorticalLabelsLeft  = "/data/MODELS/mask_left_oncolinnl_7_rs.mnc";
+my $subCorticalLabelsRight = "/data/MODELS/mask_right_oncolinnl_7_rs.mnc";
 my $bet_f                 = 0.5;
 my $bet_g		          = 0;
 my $mincANTS              = 0;
@@ -277,8 +277,9 @@ do_cmd("mnc2nii", $normalizedOut, $niiTmp);
 do_cmd("bet2", $niiTmp, $betTmpOut, "-mv", "-f", $bet_f, "-g", $bet_g);
 do_cmd("gunzip", $niiMask_gz);
 do_cmd("nii2mnc", $niiMask, $mncMask);
-do_cmd("mincresample", "-near", "-like", $nucOut, $mncMask, $betMask);
+do_cmd("mincresample", "-near", "-like", "-labels", $nucOut, $mncMask, $betMask);
 do_cmd("mincmath", "-nocheck", "-byte", "-mult", $betMask, $nucOut, $bet);
+# TODO why byte?
 
 # Do reg 
 
@@ -320,6 +321,7 @@ if($mincANTS){
 		"-transformation", $nlXFM,
 		"-like", $bet,
 		"-near",
+	        "-labels",
 		$brainMask, $headMask);
 			
 	
@@ -328,49 +330,49 @@ if($mincANTS){
 elsif($mni_autoreg){
     print "mni_autoreg not supported";
     die;
-
-	if($mritotal){
-		do_cmd("mritotal", 
-			$bet, 
-			"-model", $model, "-modeldir", $modelDir, 
-			$linXFM);
-		}
-		
-	elsif($bestlinreg){
-		do_cmd("bestlinreg", 
-			"-lsq9", 
-			$bet, $modelFull, $linXFM);
-		}
-		
-	do_cmd("xfminvert", $linXFM, $linXFMInverse);
-		
-	do_cmd("nlfit_smr", 
-		$bet, 
-		"-model", $model, "-modeldir", 
-		$modelDir."/", $linXFM, $nlXFM); 
-
-	do_cmd("xfminvert", $nlXFM, $nlXFMInverse);
-
-
-	do_cmd("mincresample",
-				"-transformation", $linXFM,
-				"-like", $modelFull, 
-				"-sinc", "-width", "2",
-				$bet, $linResample);
-				
-	do_cmd("mincresample",
-			"-transformation", $nlXFM,
-			"-like", $modelFull,
-			"-sinc", "-width",  "2",
-			$bet, $nlResample);
-			
-	do_cmd("mincresample",
-		"-invert",
-		"-transformation", $nlXFM,
-		"-like", $bet,
-		"-near",
-		$brainMask, $headMask);
-		
+# 
+# 	if($mritotal){
+# 		do_cmd("mritotal", 
+# 			$bet, 
+# 			"-model", $model, "-modeldir", $modelDir, 
+# 			$linXFM);
+# 		}
+# 		
+# 	elsif($bestlinreg){
+# 		do_cmd("bestlinreg", 
+# 			"-lsq9", 
+# 			$bet, $modelFull, $linXFM);
+# 		}
+# 		
+# 	do_cmd("xfminvert", $linXFM, $linXFMInverse);
+# 		
+# 	do_cmd("nlfit_smr", 
+# 		$bet, 
+# 		"-model", $model, "-modeldir", 
+# 		$modelDir."/", $linXFM, $nlXFM); 
+# 
+# 	do_cmd("xfminvert", $nlXFM, $nlXFMInverse);
+# 
+# 
+# 	do_cmd("mincresample",
+# 				"-transformation", $linXFM,
+# 				"-like", $modelFull, 
+# 				"-sinc", "-width", "2",
+# 				$bet, $linResample);
+# 				
+# 	do_cmd("mincresample",
+# 			"-transformation", $nlXFM,
+# 			"-like", $modelFull,
+# 			"-sinc", "-width",  "2",
+# 			$bet, $nlResample);
+# 			
+# 	do_cmd("mincresample",
+# 		"-invert",
+# 		"-transformation", $nlXFM,
+# 		"-like", $bet,
+# 		"-near",
+# 		$brainMask, $headMask);
+# 		
 	 }
 			
 ###########
@@ -457,12 +459,14 @@ if($subCorticalSeg){
 				"-near", "-invert",
 				"-transformation", $nlXFMColin,
 				"-like", $bet, '-keep_real_range',
+		                "-labels",
 				$subCorticalLabelsLeft, $subCorticalSegLeft);
 		
 		do_cmd("mincresample", 
 				"-near", "-invert",
 				"-transformation", $nlXFMColin,
 				"-like", $bet, '-keep_real_range',
+		                "-labels",
 				$subCorticalLabelsRight, $subCorticalSegRight);
 					
 	}
@@ -471,75 +475,75 @@ if($subCorticalSeg){
 	if($subCorticalMNIAutoreg){
 	    print "mni_autoreg not supported";
 	    die;
-		if($subCorticalMritotal){
-		
-			do_cmd("mritotal", 
-				$bet, 
-				"-model", $colinGlobal, "-modeldir", $colinDir, 
-				$linXFMColin);
-		}
-		
-		elsif($subcorticalBestLinReg){
-			do_cmd("bestlinreg", 
-				$bet, $colinGlobalFull, "-lsq9", $linXFMColin);
-			
-		}
-		
-		my @minctraccArgs    = qw(-weight 1 -stiff 1 -simi 0.3 -debug -nonlinear corrcoeff -iter 15);
-		
-		do_cmd("mincresample",
-			"-transformation", $linXFMColin,
-			"-sinc", "-width", "2",
-			"-like", $colinGlobalFull,
-			$bet, $linResampleColin);
-			
-		do_cmd('minctracc',
-			'-step', '4', '4', '4',
-			'-sub_lattice', '8',
-			'-lattice_diam', '12', '12', '12',
-			'-ident',
-			@minctraccArgs,
-			$linResampleColin, $colinSubcorticalFull, "${tmpdir}/nl0.xfm");
-			
-		
-		do_cmd('minctracc',
-			'-step', '2', '2', '2',
-			'-sub_lattice', '6',
-			'-lattice_diam', '6', '6', '6',
-			'-transformation', "${tmpdir}/nl0.xfm",
-			@minctraccArgs,
-			$linResampleColin, $colinSubcorticalFull, "${tmpdir}/nl1.xfm");
-			
-		
-		do_cmd('minctracc',
-			'-step', '1', '1', '1',
-			'-sub_lattice', '6',
-			'-lattice_diam', '3', '3', '3',
-			'-transformation', "${tmpdir}/nl1.xfm",
-			@minctraccArgs,
-			$linResampleColin, $colinSubcorticalFull, "${tmpdir}/nl2.xfm");
-			
-		do_cmd('xfmconcat', $linXFMColin, "${tmpdir}/nl2.xfm", $nlXFMColin);
-			
-			
-		do_cmd('mincresample',
-			'-transformation', $nlXFMColin,
-			'-like', $colinGlobalFull,
-			'-sinc', '-width', '2',
-			$bet, $nlResampleColin);
-			
-		do_cmd('mincresample',
-			'-transformation', $nlXFMColin,
-			'-like', $bet, '-invert', 
-			'-near', '-keep_real_range',
-			$subCorticalLabelsLeft, $subCorticalSegLeft);
-			
-		do_cmd('mincresample',
-			'-transformation', $nlXFMColin,
-			'-like', $bet, '-invert', 
-			'-near', '-keep_real_range',
-			$subCorticalLabelsRight, $subCorticalSegRight);
-		
+		# if($subCorticalMritotal){
+		# 
+		# 	do_cmd("mritotal", 
+		# 		$bet, 
+		# 		"-model", $colinGlobal, "-modeldir", $colinDir, 
+		# 		$linXFMColin);
+		# }
+		# 
+		# elsif($subcorticalBestLinReg){
+		# 	do_cmd("bestlinreg", 
+		# 		$bet, $colinGlobalFull, "-lsq9", $linXFMColin);
+		# 	
+		# }
+		# 
+		# my @minctraccArgs    = qw(-weight 1 -stiff 1 -simi 0.3 -debug -nonlinear corrcoeff -iter 15);
+		# 
+		# do_cmd("mincresample",
+		# 	"-transformation", $linXFMColin,
+		# 	"-sinc", "-width", "2",
+		# 	"-like", $colinGlobalFull,
+		# 	$bet, $linResampleColin);
+		# 	
+		# do_cmd('minctracc',
+		# 	'-step', '4', '4', '4',
+		# 	'-sub_lattice', '8',
+		# 	'-lattice_diam', '12', '12', '12',
+		# 	'-ident',
+		# 	@minctraccArgs,
+		# 	$linResampleColin, $colinSubcorticalFull, "${tmpdir}/nl0.xfm");
+		# 	
+		# 
+		# do_cmd('minctracc',
+		# 	'-step', '2', '2', '2',
+		# 	'-sub_lattice', '6',
+		# 	'-lattice_diam', '6', '6', '6',
+		# 	'-transformation', "${tmpdir}/nl0.xfm",
+		# 	@minctraccArgs,
+		# 	$linResampleColin, $colinSubcorticalFull, "${tmpdir}/nl1.xfm");
+		# 	
+		# 
+		# do_cmd('minctracc',
+		# 	'-step', '1', '1', '1',
+		# 	'-sub_lattice', '6',
+		# 	'-lattice_diam', '3', '3', '3',
+		# 	'-transformation', "${tmpdir}/nl1.xfm",
+		# 	@minctraccArgs,
+		# 	$linResampleColin, $colinSubcorticalFull, "${tmpdir}/nl2.xfm");
+		# 	
+		# do_cmd('xfmconcat', $linXFMColin, "${tmpdir}/nl2.xfm", $nlXFMColin);
+		# 	
+		# 	
+		# do_cmd('mincresample',
+		# 	'-transformation', $nlXFMColin,
+		# 	'-like', $colinGlobalFull,
+		# 	'-sinc', '-width', '2',
+		# 	$bet, $nlResampleColin);
+		# 	
+		# do_cmd('mincresample',
+		# 	'-transformation', $nlXFMColin,
+		# 	'-like', $bet, '-invert', 
+		# 	'-near', '-keep_real_range',
+		# 	$subCorticalLabelsLeft, $subCorticalSegLeft);
+		# 	
+		# do_cmd('mincresample',
+		# 	'-transformation', $nlXFMColin,
+		# 	'-like', $bet, '-invert', 
+		# 	'-near', '-keep_real_range',
+		# 	$subCorticalLabelsRight, $subCorticalSegRight);
+		# 
 	}
 }
 
@@ -618,14 +622,15 @@ sub do_lobe_segment
 	do_cmd("mincresample", "-like", $classify, "-invert", 
 		"-keep_real_range",
 		"-transform", $nlXFM, 
+	        "-labels",
 		"-near", $atlasModel, $atlasRes);
 	do_cmd("minclookup", "-discrete", "-lut_string", "1 1",
 		$classify, $grey);
 	do_cmd("minclookup", "-discrete", "-lut_string", "2 1",
 		$classify, $white);
 		
-	do_cmd("minccalc", "-expression", "A[0]*A[1]", $atlasRes, $grey, $grey_lobes);
-	do_cmd("minccalc", "-expression", "A[0]*A[1]", $atlasRes, $white, $white_lobes);	
+	do_cmd("minccalc", "-labels", "-expression", "A[0]*A[1]", $atlasRes, $grey, $grey_lobes);
+	do_cmd("minccalc", "-labels", "-expression", "A[0]*A[1]", $atlasRes, $white, $white_lobes);	
 	do_cmd("minclookup", "-discrete",
 		"-lut_string", "1 1; 2 3; 3 5; 4 7; 12 9; 5 11; 6 13; 7 15; 8 17; 9 19",
 		$grey_lobes, $grey_clean);
@@ -633,7 +638,7 @@ sub do_lobe_segment
 		"-lut_string", "1 2; 2 4; 3 6; 4 8; 12 10; 5 12; 6 14; 7 16; 8 18; 9 20",
 		$white_lobes, $white_clean);	
 	
-	do_cmd("mincmath", "-nocheck", "-add", $grey_clean, $white_clean, $segment);
+	do_cmd("mincmath", "-labels", "-nocheck", "-add", $grey_clean, $white_clean, $segment);
 	
 }
 
