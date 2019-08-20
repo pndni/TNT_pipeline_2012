@@ -17,7 +17,7 @@ yum groupinstall -y "Development Tools"
 
 COPY hdf5-1.6.10.tar.gz /root/
 RUN tar -xf hdf5-1.6.10.tar.gz
-RUN cd /root/hdf5-1.6.10 && ./configure --prefix=/opt/hdf5 --enable-static=yes --disable-shared && make && make check && make install
+RUN cd /root/hdf5-1.6.10 && ./configure --prefix=/opt/hdf5 --enable-static=yes && make && make check && make install
 RUN rm -rf /root/hdf5-1.6.10{,.tar.gz}
 
 COPY netcdf-4.0.1.tar.gz /root/
