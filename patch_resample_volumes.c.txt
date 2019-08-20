@@ -1,0 +1,13 @@
+261a262,263
+> 	 if ( ! ofp->labels)
+> 	 {
+271a274
+> 	 }
+304a308,314
+>       (void) miset_valid_range(ofp->mincid, ofp->imgid, valid_range);
+>    }
+> 
+>    if ( ofp->labels )
+>    {
+>       (void) mivarput1(ofp->mincid, ofp->minid, 0, NC_DOUBLE, NULL, &valid_range[0]);
+>       (void) mivarput1(ofp->mincid, ofp->maxid, 0, NC_DOUBLE, NULL, &valid_range[1]);

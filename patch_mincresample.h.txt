@@ -1,0 +1,4 @@
+189a190
+>    int labels;               /* is contents supposed to be labels*/
+259a261
+>    int is_labels;

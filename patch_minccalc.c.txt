@@ -1,0 +1,7 @@
+171a172
+> static int is_labels = FALSE;
+218a220,221
+>    {"-labels", ARGV_CONSTANT, (char *) TRUE, (char *) &is_labels,
+>        "integer operation on labels"},
+402a406
+>    set_loop_labels(loop_options, is_labels);

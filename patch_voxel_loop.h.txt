@@ -1,0 +1,6 @@
+296a297,299
+> MNCAPI void set_loop_labels(Loop_Options *loop_options,
+> 			    int labels);
+>   
+304a308
+> MNCAPI int get_loop_labels(Loop_Options *loop_options);

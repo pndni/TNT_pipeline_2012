@@ -1,0 +1,55 @@
+350c350,351
+<       FALSE			/* MINC 2.0 format? */
+---
+>       FALSE,    		/* MINC 2.0 format? */
+>       FALSE                     /* is output labels */
+475a477,478
+>       {"-labels", ARGV_CONSTANT, (char *) TRUE, (char *) &args.is_labels,
+>           "integer operation on labels"},
+627a631
+>    in_vol->file->labels = FALSE;
+730a735
+>    out_vol->file->labels = args.is_labels;
+1447,1449c1452,1461
+<    out_file->maxid = micreate_std_variable(out_file->mincid, MIimagemax,
+<                                            NC_DOUBLE, nmaxmin_dims, 
+<                                            out_maxmin_dims);
+---
+>    if(out_file->labels)
+>    {
+>       out_file->maxid = micreate_std_variable(out_file->mincid, MIimagemax,
+> 					      NC_DOUBLE, 0,
+> 					      NULL);
+>    } else {
+>       out_file->maxid = micreate_std_variable(out_file->mincid, MIimagemax,
+>                                               NC_DOUBLE, nmaxmin_dims, 
+>                                               out_maxmin_dims);
+>    }
+1453,1455c1465,1474
+<    out_file->minid = micreate_std_variable(out_file->mincid, MIimagemin,
+<                                            NC_DOUBLE, nmaxmin_dims, 
+<                                            out_maxmin_dims);
+---
+>    if(out_file->labels)
+>    {
+>       out_file->minid = micreate_std_variable(out_file->mincid, MIimagemin,
+>                                               NC_DOUBLE, 0, 
+>                                               NULL);
+>    } else {
+>       out_file->minid = micreate_std_variable(out_file->mincid, MIimagemin,
+>                                               NC_DOUBLE, nmaxmin_dims, 
+>                                               out_maxmin_dims);
+>    }
+1532,1533c1551,1559
+<    (void) miicv_setint(out_file->icvid, MI_ICV_DO_NORM, TRUE);
+<    (void) miicv_setint(out_file->icvid, MI_ICV_USER_NORM, TRUE);
+---
+>    if(out_file->labels)
+>    {
+>       (void) miicv_setint(out_file->icvid, MI_ICV_DO_NORM, FALSE);
+>       (void) miicv_setint(out_file->icvid, MI_ICV_USER_NORM, FALSE);
+>       (void) miicv_setint(out_file->icvid, MI_ICV_DO_RANGE, FALSE);
+>    } else {
+>       (void) miicv_setint(out_file->icvid, MI_ICV_DO_NORM, TRUE);
+>       (void) miicv_setint(out_file->icvid, MI_ICV_USER_NORM, TRUE);
+>    }
