@@ -1,0 +1,7 @@
+Singularity name:
+TNT_pipeline_v1-784e353f36.simg
+mincreshape version:
+program: 2.0.18
+libminc: 2.0.18
+netcdf : "4.0.1" of Jul  8 2019 20:16:55 $
+HDF5   : 1.6.10
