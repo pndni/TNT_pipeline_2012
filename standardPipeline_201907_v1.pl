@@ -142,7 +142,6 @@ my @argTbl =
 &GetOptions(\@argTbl, \@ARGV);
 
 my $modelFull        = $modelDir."/".$model.".mnc";
-my $modelMask        = $modelDir."/".$model."_mask.mnc";
 ##############
 # Set up I/O
 ##############
