@@ -39,7 +39,6 @@ my $tagFile           = "ntags_1000_prob_90_nobg_sys808.tag"; #"ntags_sys808_pau
 my $atlasModel        = "/data/MODELS/SYS808_atlas_labels_nomiddle_rs.mnc";
 my $subCorticalSeg    = 0;
 my $colinDir          = "/data/MODELS";
-my $colinSubcortModel = "colin_bg_generous_0.3mm.mnc";
 my $colinGlobal       = "colin27_t1_tal_lin";
 my $subCorticalLabelsLeft  = "/data/MODELS/mask_left_oncolinnl_7_rs.mnc";
 my $subCorticalLabelsRight = "/data/MODELS/mask_right_oncolinnl_7_rs.mnc";
@@ -97,8 +96,6 @@ my @argTbl =
 		"set directory to search for colin27 models required for subcortical segmentation"],
 		["-colin_global", "string", 1, \$colinGlobal,
 		"set filename for global colin27 model required for subcortical segmentation"],
-		["-colin_subcortical", "string", 1, \$colinSubcortModel,
-		"set filename for subcortical colin27 model required for subcortical segmentation"],
 		["Classification Options", "section"],
 		["-tagfiledir", "string", 1, \$tagFileDir,
 		"set the directory for the tagfile."],
@@ -423,7 +420,6 @@ if($subCorticalSeg){
 	"++++++++++++++++++++++++++++++++++++++++++++++++++++ \n\n";
 	
 	my $colinGlobalFull      = "${colinDir}/${colinGlobal}.mnc";
-	my $colinSubcorticalFull = "${colinDir}/${colinSubcortModel}";
 	
 	if($subCorticalMincAnts){
 
