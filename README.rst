@@ -10,6 +10,10 @@ and therefore hard to replicate. (If anybody knows how to get their
 hands on an old version of icc, please open an issue so we can assess
 feasibility.)
 
+This pipeline has also been modified to include features that either
+appear in later pipeliens are were often calculated in tandom,
+specifically ICV and intensity calculation.
+
 The other major change between this pipeline and the real 2012 version
 is the patches to minc tools to fix discrete operations. See the
 Dockerfile for specifics, but a rough idea can be found by looking at
@@ -51,6 +55,11 @@ Model Options:
 -atlaslabels   set the file for the segmentation masks (default: /data/MODELS/SYS808_atlas_labels_nomiddle_rs.mnc)
 -brainmask     set the brain mask name for estimating brain volume (default: /data/MODELS/SYS808_brainmask.mnc)
 
+ICV options
+
+-icv           Calculate intensity and volume in ICV
+-icvmask       set the brain mask name for estimating ICV (default: /data/MODELS/SYS808_icv.mnc)
+
 BET Options:
 
 -bet_f         BET fractional intesity threshold (0->1); smaller values give larger brain outline (default: 0.5)
@@ -91,6 +100,10 @@ Subcortical registration options:
                            -sub_cortical_mni_autoreg mode (binary flag, default: False)
 -subcortical_bestlinreg    FORBIDDEN. use bestlinreg for initial linear registration to colin27 - can only be used in
                            -sub_cortical_mni_autoreg mode (binary flag, default: False)
+
+Other options:
+
+-debug                     Reduce mincANTS iterations to quickly test that the pipeline runs without errors.
 
 
 Example methods write-up

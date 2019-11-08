@@ -53,6 +53,9 @@ my $subCorticalMNIAutoreg = 0;
 my $subCorticalMritotal   = 0;
 my $subcorticalBestLinReg = 0;
 my ($help, $Usage, $me);
+my $icv                   = 0;
+my $icvMask = "/data/MODELS/SYS808_icv.mnc";
+my $debug                 = 0;
 
 ##############
 # Define usage and help stuff
@@ -107,6 +110,10 @@ my @argTbl =
 		["Set files for models", "section"],
 		["-brainmask", "string", 1, \$brainMask,
 		"set the brain mask name for estimating brain volume."],
+		["-icv", "boolean", 0, \$icv,
+		"calculated icv"],
+		["-icvmask", "string", 1, \$icvMask,
+		"set the ICV mask for estimating brain volume."],
 		["-sub_cortical_labels_left", "string", \$subCorticalLabelsLeft,
 		"set filename for left subcortical labels required for subcortical segmentation"],
 		["-sub_cortical_labels_right", "string", \$subCorticalLabelsRight,
@@ -135,6 +142,8 @@ my @argTbl =
 		"use mritotal for initial linear registration to colin27 - can only be used in -sub_cortical_mni_autoreg mode"],
 		["-subcortical_bestlinreg",  "boolean", 0, \$subcorticalBestLinReg,
 		"use bestlinreg for initial linear registration to colin27 - can only be used in -sub_cortical_mni_autoreg mode"],	
+	        ["-debug", "boolean", 0, \$debug,
+	        "Limit ants iterations for debugging"]
 			);
 
 
@@ -218,6 +227,7 @@ my $classifyNative = "$classifyDir/".$inputBase[0]."_tal_classify.mnc";
 my $segment        = "$segmentDir/".$inputBase[0]."_segment.mnc";
 my $segmentNative  = "$segmentDir/".$inputBase[0]."_tal_segment.mnc";
 my $headMask       = "$segmentDir/".$inputBase[0]."_headmask.mnc";
+my $nativeIcvMask  = "$segmentDir/".$inputBase[0]."_icvmask.mnc";
 my $atlasRes       = "$transformDir/".$inputBase[0]."_atlasRes.mnc";
 
 #Just in case;
@@ -246,6 +256,7 @@ print "\n\n++++++++++++++++++++++++++++++++++++++++++++++++++++ \n".
 "segmented data        ===> $segment \n".
 "segmented native data ===> $segmentNative \n".
 "head mask             ===> $headMask \n".
+"ICV mask             ===> $nativeIcvMask \n".
 "++++++++++++++++++++++++++++++++++++++++++++++++++++ \n\n";
 
 my $niiTmp      = "$tmpdir/$inputBase[0].nii";
@@ -278,6 +289,14 @@ do_cmd("mincmath", "-nocheck", "-byte", "-mult", $betMask, $nucOut, $bet);
 # TODO why byte?
 
 # Do reg 
+my ($affiterstr, $nliterstr);
+if ($debug){
+    $affiterstr = "1x1x1x1x1";
+    $nliterstr = "1x1x1";
+} else {
+    $affiterstr = "10000x10000x10000x10000x10000";
+    $nliterstr = "20x20x20";
+}
 
 if($mincANTS){
 
@@ -299,12 +318,12 @@ if($mincANTS){
 		#"3", "-m", "CC[${normalizedOut},${modelFull},1,4]",
 		"3", "-m", "PR[${normalizedOut},${modelFull},1,4]",
 		"--use-Histogram-Matching",
-		"--number-of-affine-iteratons", "10000x10000x10000x10000x10000",
+		"--number-of-affine-iteratons", $affiterstr,
 		"--MI-option", "32x16000",
 		"--affine-gradient-descent-option", "0.5x0.95x1.e-4x1.e-4",
 		#"-r","Gauss[1,0]", "-t", "SyN[0.25]",
 		"-r","Gauss[3,0]", "-t", "SyN[0.5]",
-		"-o", $nlXFM, "-i", "20x20x20");
+		"-o", $nlXFM, "-i", $nliterstr);
 			
 	do_cmd("mincresample",
 		"-transformation", $nlXFM,
@@ -319,6 +338,16 @@ if($mincANTS){
 		"-near",
 	        "-labels",
 		$brainMask, $headMask);
+
+	if($icv){
+	    do_cmd("mincresample",
+		   "-invert",
+		   "-transformation", $nlXFM,
+		   "-like", $bet,
+		   "-near",
+		   "-labels",
+		   $icvMask, $nativeIcvMask);
+	}
 			
 	
 }
@@ -432,11 +461,11 @@ if($subCorticalSeg){
 				#"-r","Gauss[1,0]", "-t", "SyN[0.25]",
 				"-r","Gauss[3,0]", "-t", "SyN[0.5]",
 				"--use-Histogram-Matching",
-				"--number-of-affine-iteratons", "10000x10000x10000x10000x10000",
+				"--number-of-affine-iteratons", $iterstr,
 				"--MI-option", "32x16000",
 				"--affine-gradient-descent-option", "0.5x0.95x1.e-4x1.e-4",
 				"-o", $nlXFMColin, "-i", 
-				"20x20x20"); 
+				$nliterstr); 
 				
 #		do_cmd("mincresample",
 #				"-transformation", $linXFM,
@@ -555,46 +584,60 @@ if($subCorticalSeg){
 ########################
 # Extract volumes
 ########################
+extract("${outputDir}/volumes.csv", "volume");
+extract("${outputDir}/intensities.csv", "mean");
 
-open (OUTPUT_VOL,">${outputDir}/volumes.csv");
+sub extract {
 
-print OUTPUT_VOL "Brain,";
-print OUTPUT_VOL "FrontalRightGM,FrontalRightWM,ParietalRightGM,ParietalRightWM,";
-print OUTPUT_VOL "TemporalRightGM,TemporalRightWM,OccipitalRightGM,OccipitalRightWM,";
-print OUTPUT_VOL "CerebellumRightGM,CerebellumRightWM,";
-print OUTPUT_VOL "FrontalLeftGM,FrontalLeftWM,ParietalLeftGM,ParietalLeftWM,";
-print OUTPUT_VOL "TemporalLeftGM,TemporalLeftWM,OccipitalLeftGM,OccipitalLeftWM,";
-print OUTPUT_VOL "CerebellumLeftGM,CerebellumLeftWM,";
+    my ($outfile, $stat) = @_;
+    my $fh;
+    open ($fh, ">", $outfile);
 
-if($subCorticalSeg){
-	print OUTPUT_VOL "StriatumRight,GlobusPallidusRight,ThalamusRight,";
-	print OUTPUT_VOL "StriatumLeft,GlobusPallidusLeft,ThalamusLeft";
-	}
-	
-print OUTPUT_VOL "\n";
-my  $vol;
-chomp($vol = `mincstats -mask $headMask $headMask -quiet -mask_binvalue 1 -volume`); 
-print OUTPUT_VOL "$vol";
-my @brain_labels = (1..20);
+    print $fh "Brain,";
+    print $fh "FrontalRightGM,FrontalRightWM,ParietalRightGM,ParietalRightWM,";
+    print $fh "TemporalRightGM,TemporalRightWM,OccipitalRightGM,OccipitalRightWM,";
+    print $fh "CerebellumRightGM,CerebellumRightWM,";
+    print $fh "FrontalLeftGM,FrontalLeftWM,ParietalLeftGM,ParietalLeftWM,";
+    print $fh "TemporalLeftGM,TemporalLeftWM,OccipitalLeftGM,OccipitalLeftWM,";
+    print $fh "CerebellumLeftGM,CerebellumLeftWM";
 
-foreach(@brain_labels){
-	chomp($vol = `mincstats $segment -quiet -mask $segment -mask_binvalue $_ -volume`);
-	print OUTPUT_VOL ",$vol";
-	}
-if($subCorticalSeg){	
+    if($subCorticalSeg){
+	print $fh ",StriatumRight,GlobusPallidusRight,ThalamusRight";
+	print $fh ",StriatumLeft,GlobusPallidusLeft,ThalamusLeft";
+    }
+    if($icv){
+	print $fh ",ICV"
+    }
+    
+    print $fh "\n";
+    my  $vol;
+    chomp($vol = `mincstats -mask $headMask $bet -quiet -mask_binvalue 1 -$stat`); 
+    print $fh "$vol";
+    my @brain_labels = (1..20);
+
+    foreach(@brain_labels){
+	chomp($vol = `mincstats $bet -quiet -mask $segment -mask_binvalue $_ -$stat`);
+	print $fh ",$vol";
+    }
+    if($subCorticalSeg){	
 	my @subcortical_labels = (1..3);
 	my @subs = ($subCorticalSegRight, $subCorticalSegLeft);
 	foreach (@subs){
-		my $sub = $_;
-		foreach(@subcortical_labels){
-			chomp($vol = `mincstats $sub -quiet -mask $sub -mask_binvalue $_ -volume`);
-			print OUTPUT_VOL ",$vol";
-			}
-		}
+	    my $sub = $_;
+	    foreach(@subcortical_labels){
+		chomp($vol = `mincstats $bet -quiet -mask $sub -mask_binvalue $_ -$stat`);
+		print $fh ",$vol";
+	    }
 	}
-	
-print OUTPUT_VOL "\n";
-close(OUTPUT_VOL);
+    }
+    if($icv){
+	chomp($vol = `mincstats -mask $nativeIcvMask $bet -quiet -mask_binvalue 1 -$stat`);
+	print $fh ",$vol";
+    }
+    
+    print $fh "\n";
+    close($fh);
+} 
 
 
 #this bit is a rather simplified version of Louis Collins' stxsegment
