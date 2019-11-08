@@ -139,7 +139,7 @@ my @argTbl =
 
 
 
-&GetOptions(\@argTbl, \@ARGV);
+&GetOptions(\@argTbl, \@ARGV) or die "Failed to parse args";
 
 my $modelFull        = $modelDir."/".$model.".mnc";
 ##############
