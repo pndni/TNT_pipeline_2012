@@ -461,7 +461,7 @@ if($subCorticalSeg){
 				#"-r","Gauss[1,0]", "-t", "SyN[0.25]",
 				"-r","Gauss[3,0]", "-t", "SyN[0.5]",
 				"--use-Histogram-Matching",
-				"--number-of-affine-iteratons", $iterstr,
+				"--number-of-affine-iteratons", $affiterstr,
 				"--MI-option", "32x16000",
 				"--affine-gradient-descent-option", "0.5x0.95x1.e-4x1.e-4",
 				"-o", $nlXFMColin, "-i", 
