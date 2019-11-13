@@ -12,7 +12,9 @@ feasibility.)
 
 This pipeline has also been modified to include features that either
 appear in later pipeliens are were often calculated in tandom,
-specifically ICV and intensity calculation.
+specifically ICV and intensity calculation. Additionally, it has been
+modified to allow the number of non-linear registration iterations
+to be specified.
 
 The other major change between this pipeline and the real 2012 version
 is the patches to minc tools to fix discrete operations. See the

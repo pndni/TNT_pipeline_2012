@@ -56,6 +56,7 @@ my ($help, $Usage, $me);
 my $icv                   = 0;
 my $icvMask = "/data/MODELS/SYS808_icv.mnc";
 my $debug                 = 0;
+my $nliterstr              = '20x20x20';
 
 ##############
 # Define usage and help stuff
@@ -143,7 +144,9 @@ my @argTbl =
 		["-subcortical_bestlinreg",  "boolean", 0, \$subcorticalBestLinReg,
 		"use bestlinreg for initial linear registration to colin27 - can only be used in -sub_cortical_mni_autoreg mode"],	
 	        ["-debug", "boolean", 0, \$debug,
-	        "Limit ants iterations for debugging"]
+	        "Limit ants iterations for debugging"],
+	        ["-niter", "string", 1, \$nliterstr,
+	        "String to pass to mincANTS specifying the number of iterations. Default is '20x20x20'"]
 			);
 
 
@@ -289,13 +292,13 @@ do_cmd("mincmath", "-nocheck", "-byte", "-mult", $betMask, $nucOut, $bet);
 # TODO why byte?
 
 # Do reg 
-my ($affiterstr, $nliterstr);
+my $affiterstr;
 if ($debug){
     $affiterstr = "1x1x1x1x1";
     $nliterstr = "1x1x1";
 } else {
     $affiterstr = "10000x10000x10000x10000x10000";
-    $nliterstr = "20x20x20";
+    # nliterstr already set
 }
 
 if($mincANTS){
