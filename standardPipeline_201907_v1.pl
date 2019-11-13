@@ -594,6 +594,7 @@ sub extract {
     open ($fh, ">", $outfile);
 
     print $fh "Brain,";
+    print $fh "GM,WM,";
     print $fh "FrontalRightGM,FrontalRightWM,ParietalRightGM,ParietalRightWM,";
     print $fh "TemporalRightGM,TemporalRightWM,OccipitalRightGM,OccipitalRightWM,";
     print $fh "CerebellumRightGM,CerebellumRightWM,";
@@ -611,12 +612,16 @@ sub extract {
     
     print $fh "\n";
     my  $vol;
-    chomp($vol = `mincstats -mask $headMask $bet -quiet -mask_binvalue 1 -$stat`); 
+    chomp($vol = `mincstats -mask $headMask $nucOut -quiet -mask_binvalue 1 -$stat`); 
     print $fh "$vol";
+    chomp($vol = `mincstats -mask $classify $nucOut -quiet -mask_binvalue 1 -$stat`); 
+    print $fh ",$vol";
+    chomp($vol = `mincstats -mask $classify $nucOut -quiet -mask_binvalue 2 -$stat`); 
+    print $fh ",$vol";
     my @brain_labels = (1..20);
 
     foreach(@brain_labels){
-	chomp($vol = `mincstats $bet -quiet -mask $segment -mask_binvalue $_ -$stat`);
+	chomp($vol = `mincstats $nucOut -quiet -mask $segment -mask_binvalue $_ -$stat`);
 	print $fh ",$vol";
     }
     if($subCorticalSeg){	
@@ -625,13 +630,13 @@ sub extract {
 	foreach (@subs){
 	    my $sub = $_;
 	    foreach(@subcortical_labels){
-		chomp($vol = `mincstats $bet -quiet -mask $sub -mask_binvalue $_ -$stat`);
+		chomp($vol = `mincstats $nucOut -quiet -mask $sub -mask_binvalue $_ -$stat`);
 		print $fh ",$vol";
 	    }
 	}
     }
     if($icv){
-	chomp($vol = `mincstats -mask $nativeIcvMask $bet -quiet -mask_binvalue 1 -$stat`);
+	chomp($vol = `mincstats -mask $nativeIcvMask $nucOut -quiet -mask_binvalue 1 -$stat`);
 	print $fh ",$vol";
     }
     
