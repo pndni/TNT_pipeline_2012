@@ -57,6 +57,8 @@ my $icv                   = 0;
 my $icvMask = "/data/MODELS/SYS808_icv.mnc";
 my $debug                 = 0;
 my $nliterstr              = '20x20x20';
+my $initaffbet            = 0;
+my $betB                  = 0;
 
 ##############
 # Define usage and help stuff
@@ -124,11 +126,15 @@ my @argTbl =
 		"BET fractional intesity threshold (0->1); smaller values give larger brain outline"],
 		["-bet_g", "float", 1, \$bet_g,
 		"BET vertical gradient in fractional intensity threshold (-1->1); positive values give larger brain outline at bottom and smaller at top"],	
+	        ["-bet_B", "boolean", 0, \$betB,
+	         "use the -B flag with bet"],
 		["nonlinear registration options", "section"],
 		["-mincANTS", "boolean", 0, \$mincANTS,
 		"use mincANTS symmetric nonlinear registration with greedy optimization for global nonlinear registration"],
 		["-mni_autoreg", "boolean", 0, \$mni_autoreg,
 		"use mni_autoreg software to do nonlinear registration"],
+	        ["-initAffBet", "boolean", 0, \$initaffbet,
+	        "Do an initial affine transformation using the brain only image."],
 		["linear registration option if mni_autoreg is selected", "section",],
 		["-mritotal", "boolean", 0, \$mritotal,
 		"use mritotal for lsq9 linear registration - can only be used in -mni_autoreg mode"],
@@ -284,7 +290,11 @@ do_cmd("inormalize",
 # Do Bet
 
 do_cmd("mnc2nii", $normalizedOut, $niiTmp);
+if($betB){
+do_cmd("bet2", $niiTmp, $betTmpOut, "-mv", "-f", $bet_f, "-g", $bet_g, "-B");
+} else {
 do_cmd("bet2", $niiTmp, $betTmpOut, "-mv", "-f", $bet_f, "-g", $bet_g);
+}
 do_cmd("gunzip", $niiMask_gz);
 do_cmd("nii2mnc", $niiMask, $mncMask);
 do_cmd("mincresample", "-near", "-labels", "-like", $nucOut, $mncMask, $betMask);
@@ -303,20 +313,31 @@ if ($debug){
 
 if($mincANTS){
 
-#	do_cmd("mincANTS", 
-#		"3", "-m", "MI[${bet},${modelFull},1,32]",
-#		"-o", $linXFM, "-i", "0",
-#		"--use-Histogram-Matching",
-#		"--number-of-affine-iteratons", "10000x10000x10000x10000x10000",
-#		"--MI-option", "32x16000",
-#		"--affine-gradient-descent-option", "0.5x0.95x1.e-4x1.e-4");
-	
-#	do_cmd("mincresample",
-#		"-transformation", $linXFM,
-#		"-like", $modelFull, 
-#		"-sinc", "-width", "2",
-#		$bet, $linResample);
+    if ($initaffbet){
+	do_cmd("mincANTS", 
+		"3", "-m", "MI[${bet},${modelFull},1,32]",
+		"-o", $linXFM, "-i", "0",
+		"--use-Histogram-Matching",
+		"--number-of-affine-iteratons", "10000x10000x10000x10000x10000",
+		"--MI-option", "32x16000",
+		"--affine-gradient-descent-option", "0.5x0.95x1.e-4x1.e-4");
+       
+	do_cmd("mincresample",
+		"-transformation", $linXFM,
+		"-like", $modelFull, 
+		"-sinc", "-width", "2",
+		$bet, $linResample);
 					
+	do_cmd("mincANTS", 
+		#"3", "-m", "CC[${normalizedOut},${modelFull},1,4]",
+		"3", "-m", "PR[${normalizedOut},${modelFull},1,4]",
+		"--use-Histogram-Matching",
+		"--number-of-affine-iteratons", 0,
+		"--MI-option", "32x16000",
+		#"-r","Gauss[1,0]", "-t", "SyN[0.25]",
+		"-r","Gauss[3,0]", "-t", "SyN[0.5]",
+		"-o", $nlXFM, "-i", $nliterstr);
+    } else {
 	do_cmd("mincANTS", 
 		#"3", "-m", "CC[${normalizedOut},${modelFull},1,4]",
 		"3", "-m", "PR[${normalizedOut},${modelFull},1,4]",
@@ -327,6 +348,7 @@ if($mincANTS){
 		#"-r","Gauss[1,0]", "-t", "SyN[0.25]",
 		"-r","Gauss[3,0]", "-t", "SyN[0.5]",
 		"-o", $nlXFM, "-i", $nliterstr);
+    }
 			
 	do_cmd("mincresample",
 		"-transformation", $nlXFM,
