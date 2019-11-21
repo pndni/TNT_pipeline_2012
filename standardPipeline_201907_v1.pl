@@ -336,7 +336,8 @@ if($mincANTS){
 		"--MI-option", "32x16000",
 		#"-r","Gauss[1,0]", "-t", "SyN[0.25]",
 		"-r","Gauss[3,0]", "-t", "SyN[0.5]",
-		"-o", $nlXFM, "-i", $nliterstr);
+	        "-o", $nlXFM, "-i", $nliterstr,
+	        "-a", $linXFM);
     } else {
 	do_cmd("mincANTS", 
 		#"3", "-m", "CC[${normalizedOut},${modelFull},1,4]",
