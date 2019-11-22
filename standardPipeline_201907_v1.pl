@@ -273,6 +273,7 @@ my $betTmpOut   = "$tmpdir/$inputBase[0]_out";
 my $mncMask     = "$tmpdir/$inputBase[0]"."_out_mask.mnc";
 my $niiMask     = "$tmpdir/$inputBase[0]"."_out_mask.nii";
 my $niiMask_gz  = "$tmpdir/$inputBase[0]"."_out_mask.nii.gz";
+my $modelMasked = "$tmpdir/$inputBase[0]"."_model_masked.mnc";
 
 
 ##############
@@ -280,6 +281,7 @@ my $niiMask_gz  = "$tmpdir/$inputBase[0]"."_out_mask.nii.gz";
 ###############
 
 
+do_cmd("mincmath", "-mult", $modelFull, $brainMask, $modelMasked);
 
 do_cmd("nu_correct", $inputMRI, $nucOut);
 do_cmd("inormalize",
@@ -315,7 +317,7 @@ if($mincANTS){
 
     if ($initaffbet){
 	do_cmd("mincANTS", 
-		"3", "-m", "MI[${bet},${modelFull},1,32]",
+		"3", "-m", "MI[${bet},${modelMasked},1,32]",
 		"-o", $linXFM, "-i", "0",
 		"--use-Histogram-Matching",
 		"--number-of-affine-iteratons", "10000x10000x10000x10000x10000",
